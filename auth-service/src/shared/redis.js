@@ -3,14 +3,7 @@ const config = require("../config/config");
 
 const createClusterClient = () => {
   return new IORedis.Cluster(
-    [
-      { host: config.redis.nodes[0].host, port: config.redis.nodes[0].port },
-      { host: config.redis.nodes[1].host, port: config.redis.nodes[1].port },
-      { host: config.redis.nodes[2].host, port: config.redis.nodes[2].port },
-      { host: config.redis.nodes[3].host, port: config.redis.nodes[3].port },
-      { host: config.redis.nodes[4].host, port: config.redis.nodes[4].port },
-      { host: config.redis.nodes[5].host, port: config.redis.nodes[5].port },
-    ],
+    config.redis.nodes.map(({ host, port }) => ({ host, port })),
     {
       redisOptions: {
         connectTimeout: 10000,
@@ -74,6 +67,20 @@ const RedisClient = {
   get: (key) => redisCluster.get(key),
   set: (key, value) => redisCluster.set(key, value),
   del: (key) => redisCluster.del(key),
+  setAccessToken: async (userId, token) => {
+    const key = `access-token:${userId}`;
+    await redisCluster.set(key, token, { EX: Number(config.jwt_token_expire) });
+  },
+
+  getAccessToken: async (userId) => {
+    const key = `access-token:${userId}`;
+    return await redisCluster.get(key);
+  },
+
+  delAccessToken: async (userId) => {
+    const key = `access-token:${userId}`;
+    await redisCluster.del(key);
+  },
 };
 
 module.exports = { RedisClient };

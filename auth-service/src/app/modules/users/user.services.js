@@ -1,12 +1,13 @@
 const UserModel = require("./user.model");
 const httpStatus = require("http-status");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const ErrorHandler = require("../../../ErrorHandler/errorHandler");
 const config = require("../../../config/config");
 const jwtHandle = require("../../../shared/createToken");
 const createUserInToDB = async (payload) => {
   const user = await UserModel.findOne({ email: payload?.email });
+
   if (user) {
     throw new ErrorHandler("User already axist!", httpStatus.CONFLICT);
   }

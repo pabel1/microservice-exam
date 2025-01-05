@@ -1,0 +1,181 @@
+version: "3.8"
+
+services:
+  # Redis Cluster Setup
+  redis-1:
+    image: "redis:latest"
+    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-1-data:/data
+    networks:
+      - microservices-net
+
+  redis-2:
+    image: "redis:latest"
+    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-2-data:/data
+    networks:
+      - microservices-net
+
+  redis-3:
+    image: "redis:latest"
+    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis-3-data:/data
+    networks:
+      - microservices-net
+
+  redis-cluster-init:
+    image: "redis:latest"
+    depends_on:
+      - redis-1
+      - redis-2
+      - redis-3
+    command: >
+      bash -c "echo yes | redis-cli --cluster create
+      redis-1:6379
+      redis-2:6379
+      redis-3:6379
+      --cluster-replicas 0"
+    networks:
+      - microservices-net
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile.dev
+    ports:
+      - "4001:4001"
+    environment:
+      # - ./envs/auth-service.env
+      # NODE_ENV=production
+      - NODE_ENV=development
+      - PORT=4001
+      - DATABASE_URL=mongodb://mongodb:27017/auth-service
+      - CLOUD_NAME=dlobu2gpz
+      - API_KEY=192912688546831
+      - API_SECRET=5lG23De8ZKLtBlPUzOJ0T-Pcn7U
+      - SOLT_ROUND=10
+      - JWT_SECRET_KEY=oehoshi3inisdir343erg7sdfegh3334gnfng
+      - JWT_REFRESH_KEY=oehoshi3inisdir343erg7sdfegh3334gnfngaffwefwefwe
+      - JWT_REFRESH_TOKEN_EXPIRE=30d
+      - JWT_TOKEN_EXPIRE=10s
+      - REDIS_NODES=redis1-private-ip:6379,redis2-private-ip:6379,redis3-private-ip:6379
+
+    depends_on:
+      - mongodb
+      - redis-1
+      - redis-2
+      - redis-3
+    networks:
+      - microservices-net
+    volumes:
+      - ./auth-service:/app
+
+    command: npm run dev
+
+  # # Product Service
+  # product-service:
+  #   build:
+  #     context: ./product-service
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - '4002:4002'
+  #   environment:
+  #     - NODE_ENV=development
+  #     - PORT=3002
+  #     - MONGODB_URI=mongodb://mongodb:27017/product-service
+  #     - REDIS_NODES=redis-1:6379,redis-2:6379,redis-3:6379
+  #   depends_on:
+  #     - mongodb
+  #     - redis-1
+  #     - redis-2
+  #     - redis-3
+  #   networks:
+  #     - microservices-net
+  #   volumes:
+  #     - ./product-service:/app
+  #     - /app/node_modules
+
+  # # Inventory Service
+  # inventory-service:
+  #   build:
+  #     context: ./inventory-service
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - '3003:3003'
+  #   environment:
+  #     - NODE_ENV=development
+  #     - PORT=3003
+  #     - MONGODB_URI=mongodb://mongodb:27017/inventory-service
+  #     - REDIS_NODES=redis-1:6379,redis-2:6379,redis-3:6379
+  #   depends_on:
+  #     - mongodb
+  #     - redis-1
+  #     - redis-2
+  #     - redis-3
+  #   networks:
+  #     - microservices-net
+  #   volumes:
+  #     - ./inventory-service:/app
+  #     - /app/node_modules
+
+  # # Order Service
+  # order-service:
+  #   build:
+  #     context: ./order-service
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - '3004:3004'
+  #   environment:
+  #     - NODE_ENV=development
+  #     - PORT=3004
+  #     - MONGODB_URI=mongodb://mongodb:27017/order-service
+  #     - REDIS_NODES=redis-1:6379,redis-2:6379,redis-3:6379
+  #   depends_on:
+  #     - mongodb
+  #     - redis-1
+  #     - redis-2
+  #     - redis-3
+  #   networks:
+  #     - microservices-net
+  #   volumes:
+  #     - ./order-service:/app
+  #     - /app/node_modules
+
+  # MongoDB
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - microservices-net
+
+networks:
+  microservices-net:
+    driver: bridge
+
+volumes:
+  mongodb-data:
+  redis-1-data:
+  redis-2-data:
+  redis-3-data:
+# some commands
+# docker-compose restart services_name
+# docker-compose build
+# docker-compose up -d
+# docker-compose down
+# docker-compose logs
+# docker-compose ps
+# docker-compose logs auth-service
+# docker-compose up -d auth-service

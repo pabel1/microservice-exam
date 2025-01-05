@@ -22,6 +22,11 @@ app.use(cookieParser());
 // define routes
 app.use("/api/v1", router);
 
+app.get("/api/v1/test", (req, res) => {
+  console.log("Test API called");
+  res.json({ message: "Test successful" });
+});
+
 // global error handler
 app.use(globalErrorHandler);
 

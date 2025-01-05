@@ -3,6 +3,10 @@ const { logger, errorLogger } = require("./src/shared/logger");
 const config = require("./src/config/config");
 const app = require("./index");
 const { RedisClient } = require("./src/shared/redis");
+const { subscribeToEvent } = require("./src/app/events");
+const {
+  verifyRedisClusterHealth,
+} = require("./src/app/modules/users/testRedis");
 async function main() {
   try {
     await mongoose.connect(config.database_url);
@@ -10,10 +14,18 @@ async function main() {
     logger.info("Database connected Successfully!!");
 
     // redis connection
-    await RedisClient.connect();
-    // .then(() => {
-    //   subscribeToEvents();
+    // await RedisClient.connect().then(async () => {
+    //   const isHealthy = await verifyRedisClusterHealth();
+    //   if (isHealthy) {
+    //     console.log("Redis cluster is healthy and ready", isHealthy);
+    //     // subscribeToEvent();
+    //   }
+    //   console.log("Redis event  called");
+    //   logger.info("Redis event  called");
+    //   // call events
+    //   subscribeToEvent();
     // });
+
     const server = app.listen(config.port, () => {
       logger.info(`Server running on port ${config.port}`);
     });

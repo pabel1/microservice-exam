@@ -1,0 +1,6 @@
+{
+  "legacyWatch": true,
+  "ignore": ["node_modules/*"],
+  "watch": [".", "*.*"],
+  "ext": "js,json"
+}

@@ -3,9 +3,11 @@ const catchAsyncError = require("../../../ErrorHandler/catchAsyncError");
 const userServices = require("./user.services");
 const config = require("../../../config/config");
 const sendResponse = require("../../../shared/sendResponse");
+const { RedisClient } = require("../../../shared/redis");
 
 const userRegistration = catchAsyncError(async (req, res) => {
   const result = await userServices.createUserInToDB(req.body);
+  console.log(" result", result);
   const { refreshToken, accessToken, userData } = result;
 
   if (refreshToken && accessToken && userData) {
@@ -16,6 +18,10 @@ const userRegistration = catchAsyncError(async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, cookieOptions);
     res.cookie("accessToken", accessToken, cookieOptions);
+
+    // set token in  redisCluster
+    const redisRes = await RedisClient.setAccessToken(userData.id, accessToken);
+    console.log("res from redis  : ", redisRes);
   }
 
   sendResponse(res, {
@@ -41,6 +47,8 @@ const userLogin = catchAsyncError(async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, cookieOptions);
     res.cookie("accessToken", accessToken, cookieOptions);
+    // set token in  redisCluster
+    await RedisClient.setAccessToken(user.id, accessToken);
   }
 
   sendResponse(res, {
