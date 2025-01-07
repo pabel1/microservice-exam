@@ -2,21 +2,44 @@ const IORedis = require("ioredis");
 const config = require("../config/config");
 
 const createClusterClient = () => {
-  return new IORedis.Cluster(
-    config.redis.nodes.map(({ host, port }) => ({ host, port })),
-    {
-      redisOptions: {
-        connectTimeout: 10000,
-        retryStrategy(times) {
-          return Math.min(times * 50, 2000);
-        },
+  const nodes = config.redis.nodes;
+  console.log("Connecting to Redis nodes:", nodes);
+
+  return new IORedis.Cluster(nodes, {
+    redisOptions: {
+      connectTimeout: 10000,
+      enableReadyCheck: true,
+      maxRetriesPerRequest: 3,
+      retryStrategy(times) {
+        const delay = Math.min(times * 50, 2000);
+        console.log(`Retry attempt ${times} with delay ${delay}ms`);
+        return delay;
       },
-      clusterRetryStrategy(times) {
-        return Math.min(times * 100, 3000);
-      },
-    }
-  );
+    },
+    clusterRetryStrategy(times) {
+      const delay = Math.min(times * 100, 3000);
+      console.log(`Cluster retry attempt ${times} with delay ${delay}ms`);
+      return delay;
+    },
+  });
 };
+// const createClusterClient = () => {
+
+//   return new IORedis.Cluster(
+//     config.redis.nodes.map(({ host, port }) => ({ host, port })),
+//     {
+//       redisOptions: {
+//         connectTimeout: 10000,
+//         retryStrategy(times) {
+//           return Math.min(times * 50, 2000);
+//         },
+//       },
+//       clusterRetryStrategy(times) {
+//         return Math.min(times * 100, 3000);
+//       },
+//     }
+//   );
+// };
 
 // Create separate clients for different purposes
 const redisCluster = createClusterClient();
@@ -40,7 +63,15 @@ const subscriptionHandlers = new Map();
 
 const RedisClient = {
   connect: async () => {
-    console.log("Redis Cluster initialized");
+    try {
+      // Test connection
+      await redisCluster.ping();
+      console.log("Redis Cluster initialized and connected");
+      return true;
+    } catch (error) {
+      console.error("Redis connection failed:", error);
+      throw error;
+    }
   },
 
   publish: async (channel, message) => {
@@ -68,12 +99,16 @@ const RedisClient = {
   set: (key, value) => redisCluster.set(key, value),
   del: (key) => redisCluster.del(key),
   setAccessToken: async (userId, token) => {
+    console.log("token", token);
     const key = `access-token:${userId}`;
-    await redisCluster.set(key, token, { EX: Number(config.jwt_token_expire) });
+    // const expiryInSeconds = parseInt(config.jwt_token_expire) || 10;
+    const expiryInSeconds = 10 * 24 * 60 * 60;
+    await redisCluster.set(key, token, "EX", expiryInSeconds);
   },
 
   getAccessToken: async (userId) => {
     const key = `access-token:${userId}`;
+    // console.log("key : ", await redisCluster.get(key));
     return await redisCluster.get(key);
   },
 

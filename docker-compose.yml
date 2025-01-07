@@ -11,6 +11,11 @@ services:
       - redis-1-data:/data
     networks:
       - microservices-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis-2:
     image: "redis:latest"
@@ -21,6 +26,11 @@ services:
       - redis-2-data:/data
     networks:
       - microservices-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis-3:
     image: "redis:latest"
@@ -31,19 +41,29 @@ services:
       - redis-3-data:/data
     networks:
       - microservices-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis-cluster-init:
     image: "redis:latest"
     depends_on:
-      - redis-1
-      - redis-2
-      - redis-3
+      redis-1:
+        condition: service_healthy
+      redis-2:
+        condition: service_healthy
+      redis-3:
+        condition: service_healthy
     command: >
-      bash -c "echo yes | redis-cli --cluster create
-      redis-1:6379
-      redis-2:6379
-      redis-3:6379
-      --cluster-replicas 0"
+      /bin/sh -c '
+      redis-cli -h redis-1 FLUSHALL &&
+      redis-cli -h redis-2 FLUSHALL &&
+      redis-cli -h redis-3 FLUSHALL &&
+      sleep 5 &&
+      redis-cli --cluster create redis-1:6379 redis-2:6379 redis-3:6379 --cluster-replicas 0 --cluster-yes
+      '
     networks:
       - microservices-net
 
@@ -67,19 +87,18 @@ services:
       - JWT_SECRET_KEY=oehoshi3inisdir343erg7sdfegh3334gnfng
       - JWT_REFRESH_KEY=oehoshi3inisdir343erg7sdfegh3334gnfngaffwefwefwe
       - JWT_REFRESH_TOKEN_EXPIRE=30d
-      - JWT_TOKEN_EXPIRE=10s
-      - REDIS_NODES=redis1-private-ip:6379,redis2-private-ip:6379,redis3-private-ip:6379
+      - JWT_TOKEN_EXPIRE=10d
+      - REDIS_NODES=redis://redis-1:6379,redis://redis-2:6379,redis://redis-3:6379
 
     depends_on:
-      - mongodb
-      - redis-1
-      - redis-2
-      - redis-3
+      redis-cluster-init:
+        condition: service_completed_successfully
+      mongodb:
+        condition: service_started
     networks:
       - microservices-net
     volumes:
       - ./auth-service:/app
-
     command: npm run dev
 
   # # Product Service

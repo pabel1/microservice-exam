@@ -3,6 +3,7 @@ const express = require("express");
 const validateRequest = require("../../../Middleware/validateRequest");
 const JoiValidationSchema = require("./user.validation");
 const userController = require("./user.controller");
+const authVerification = require("../../../Middleware/authVarification");
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ router.post(
   validateRequest(JoiValidationSchema.loginSchema),
   userController.userLogin
 );
-// router.get("/logged-in-user", authVerification, userController.loggedInUser);
+router.get("/logged-in-user", authVerification, userController.loggedInUser);
 
 // router.post(
 //   "/refresh-token",

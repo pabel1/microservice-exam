@@ -1,102 +1,77 @@
 const jwt = require("jsonwebtoken");
 const ErrorHandler = require("../ErrorHandler/errorHandler");
-const UserModel = require("../app/modules/Auth/users/user.model");
 const httpStatus = require("http-status");
 const config = require("../config/config");
-const jwtHandle = require("../shared/createToken");
+const { RedisClient } = require("../shared/redis");
 
 const authVerification = async (req, res, next) => {
   try {
-    let token;
-
-    if (req.cookies.accessToken) {
-      token = req.cookies.accessToken;
-    } else {
-      const { authorization } = req.headers;
-
-      token = authorization?.split(" ")[1];
+    // 1. Check if authorization header exists
+    const { authorization } = req.headers;
+    if (!authorization) {
+      throw new ErrorHandler(
+        "Authorization header is missing",
+        httpStatus.UNAUTHORIZED
+      );
     }
+
+    // 2. Extract and validate token format
+    const token = authorization.split(" ")[1];
     if (!token) {
-      throw new ErrorHandler("Please login to access the resource", 401);
+      throw new ErrorHandler("Invalid token format", httpStatus.UNAUTHORIZED);
     }
-
-    let decoded;
 
     try {
-      decoded = jwt.verify(token, config.jwt_key);
+      // 3. Verify JWT token
+      const decoded = jwt.verify(token, config.jwt_key);
       const { email, userId } = decoded;
-      req.email = email;
 
-      const rootUser = await UserModel.findOne({ email: email });
+      // 4. Validate token in Redis
+      try {
+        const storedToken = await RedisClient.getAccessToken(userId);
 
-      if (!rootUser) {
-        throw new ErrorHandler("User not found", 404);
+        if (!storedToken) {
+          throw new ErrorHandler("Session expired", httpStatus.UNAUTHORIZED);
+        }
+
+        if (storedToken !== token) {
+          throw new ErrorHandler("Invalid session", httpStatus.UNAUTHORIZED);
+        }
+
+        // 5. Set verified user data in request
+        req.userId = userId;
+        req.email = email;
+
+        next();
+      } catch (redisError) {
+        // Handle Redis specific errors
+        throw new ErrorHandler(
+          "Session validation failed",
+          httpStatus.INTERNAL_SERVER_ERROR
+        );
       }
-
-      req.user = rootUser;
-      req.userId = userId;
-      req.email = email;
-    } catch (error) {
-      if (error.name === "TokenExpiredError") {
-        // Access token has expired, try to refresh it using the refreshToken
-        const refreshToken = req.cookies.refreshToken;
-        if (!refreshToken) {
-          throw new ErrorHandler(
-            "Access token expired. Please login again.",
-            401
-          );
-        }
-
-        try {
-          // Verify the refreshToken and check for validity
-          const refreshTokenDecoded = jwt.verify(
-            refreshToken,
-            config.jwt_refresh_key
-          );
-          const { email, userId } = refreshTokenDecoded;
-
-          // If the refreshToken is valid, generate a new accessToken
-          const newAccessToken = await jwtHandle(
-            { id: userId, email: email },
-            config.jwt_key,
-            config.jwt_token_expire
-          );
-
-          req.cookies.accessToken = newAccessToken;
-
-          //
-          if (newAccessToken) {
-            let cookieOptions = {
-              secure: config.env === "production",
-              httpOnly: true,
-            };
-            res.cookie("accessToken", newAccessToken, cookieOptions);
-          }
-
-          const rootUser = await UserModel.findOne({ email: email });
-
-          if (!rootUser) {
-            throw new ErrorHandler("User not found", 404);
-          }
-
-          req.user = rootUser;
-          req.userId = userId;
-          req.email = email;
-        } catch (error) {
-          console.log(error);
-          throw new ErrorHandler(
-            "Refresh token is invalid. Please login again.",
-            401
-          );
-        }
+    } catch (jwtError) {
+      console.log("jwtError : ", jwtError);
+      if (jwtError.name === "TokenExpiredError") {
+        throw new ErrorHandler("Token has expired", httpStatus.UNAUTHORIZED);
+      } else if (jwtError.name === "JsonWebTokenError") {
+        throw new ErrorHandler("Invalid token", httpStatus.UNAUTHORIZED);
       } else {
-        throw error;
+        throw jwtError;
       }
     }
-    // Continue with the next middleware
-    next();
   } catch (error) {
-    next(error, httpStatus.UNAUTHORIZED);
+    // Final error handler
+    if (error instanceof ErrorHandler) {
+      next(error);
+    } else {
+      next(
+        new ErrorHandler(
+          "Authentication failed",
+          httpStatus.INTERNAL_SERVER_ERROR
+        )
+      );
+    }
   }
 };
 

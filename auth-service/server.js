@@ -14,17 +14,17 @@ async function main() {
     logger.info("Database connected Successfully!!");
 
     // redis connection
-    // await RedisClient.connect().then(async () => {
-    //   const isHealthy = await verifyRedisClusterHealth();
-    //   if (isHealthy) {
-    //     console.log("Redis cluster is healthy and ready", isHealthy);
-    //     // subscribeToEvent();
-    //   }
-    //   console.log("Redis event  called");
-    //   logger.info("Redis event  called");
-    //   // call events
-    //   subscribeToEvent();
-    // });
+    await RedisClient.connect();
+    const isHealthy = await verifyRedisClusterHealth();
+
+    if (isHealthy) {
+      console.log("isHealthy", isHealthy);
+      console.log("Redis cluster is healthy and ready");
+      logger.info("Redis cluster is healthy and ready");
+      subscribeToEvent();
+    } else {
+      throw new Error("Redis cluster health check failed");
+    }
 
     const server = app.listen(config.port, () => {
       logger.info(`Server running on port ${config.port}`);

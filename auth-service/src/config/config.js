@@ -1,5 +1,6 @@
 const dotenv = require("dotenv");
 const path = require("path");
+const { URL } = require("url");
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
@@ -12,11 +13,13 @@ module.exports = {
   port: process.env.PORT,
   database_url: process.env.DATABASE_URL,
   bcrypt_salt_rounds: process.env.SOLT_ROUND,
-
   redis: {
-    nodes: process.env.REDIS_NODES.split(",").map((node) => {
-      const [host, port] = node.split(":");
-      return { host, port: parseInt(port, 10) };
+    nodes: process.env.REDIS_NODES.split(",").map((url) => {
+      const urlObj = new URL(url);
+      return {
+        host: urlObj.hostname,
+        port: parseInt(urlObj.port),
+      };
     }),
   },
 };

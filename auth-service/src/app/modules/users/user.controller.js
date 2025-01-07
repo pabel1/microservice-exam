@@ -20,8 +20,7 @@ const userRegistration = catchAsyncError(async (req, res) => {
     res.cookie("accessToken", accessToken, cookieOptions);
 
     // set token in  redisCluster
-    const redisRes = await RedisClient.setAccessToken(userData.id, accessToken);
-    console.log("res from redis  : ", redisRes);
+    await RedisClient.setAccessToken(userData.id, accessToken);
   }
 
   sendResponse(res, {
@@ -47,6 +46,10 @@ const userLogin = catchAsyncError(async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, cookieOptions);
     res.cookie("accessToken", accessToken, cookieOptions);
+
+    // check already exist token in redisCluster or not
+    // const isExist = await RedisClient.getAccessToken(user.id);
+    // console.log("isExist : ", isExist);
     // set token in  redisCluster
     await RedisClient.setAccessToken(user.id, accessToken);
   }
@@ -63,7 +66,7 @@ const userLogin = catchAsyncError(async (req, res) => {
 });
 
 const loggedInUser = catchAsyncError(async (req, res) => {
-  const result = await userServices.loggedInUserFromDB(req.user._id);
+  const result = await userServices.loggedInUserFromDB(req.userId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

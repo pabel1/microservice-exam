@@ -101,9 +101,7 @@ const loggedInUserFromDB = async (userID) => {
   if (!user) {
     throw new ErrorHandler("User not found", httpStatus.NOT_FOUND);
   }
-  return {
-    user,
-  };
+  return user;
 };
 
 const userServices = {
