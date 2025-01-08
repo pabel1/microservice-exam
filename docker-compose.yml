@@ -89,7 +89,6 @@ services:
       - JWT_REFRESH_TOKEN_EXPIRE=30d
       - JWT_TOKEN_EXPIRE=10d
       - REDIS_NODES=redis://redis-1:6379,redis://redis-2:6379,redis://redis-3:6379
-
     depends_on:
       redis-cluster-init:
         condition: service_completed_successfully
@@ -102,50 +101,68 @@ services:
     command: npm run dev
 
   # # Product Service
-  # product-service:
-  #   build:
-  #     context: ./product-service
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - '4002:4002'
-  #   environment:
-  #     - NODE_ENV=development
-  #     - PORT=3002
-  #     - MONGODB_URI=mongodb://mongodb:27017/product-service
-  #     - REDIS_NODES=redis-1:6379,redis-2:6379,redis-3:6379
-  #   depends_on:
-  #     - mongodb
-  #     - redis-1
-  #     - redis-2
-  #     - redis-3
-  #   networks:
-  #     - microservices-net
-  #   volumes:
-  #     - ./product-service:/app
-  #     - /app/node_modules
+  product-service:
+    build:
+      context: ./product-service
+      dockerfile: Dockerfile.dev
+    ports:
+      - "4002:4002"
+    environment:
+      # NODE_ENV=production
+      - NODE_ENV=development
+      - PORT=4002
+      - DATABASE_URL=mongodb://mongodb:27017/product-service
+      - CLOUD_NAME=dlobu2gpz
+      - API_KEY=192912688546831
+      - API_SECRET=5lG23De8ZKLtBlPUzOJ0T-Pcn7U
+      - SOLT_ROUND=10
+      - JWT_SECRET_KEY=oehoshi3inisdir343erg7sdfegh3334gnfng
+      - JWT_REFRESH_KEY=oehoshi3inisdir343erg7sdfegh3334gnfngaffwefwefwe
+      - JWT_REFRESH_TOKEN_EXPIRE=30d
+      - JWT_TOKEN_EXPIRE=10d
+      - REDIS_NODES=redis://redis-1:6379,redis://redis-2:6379,redis://redis-3:6379
+    depends_on:
+      redis-cluster-init:
+        condition: service_completed_successfully
+      mongodb:
+        condition: service_started
+    networks:
+      - microservices-net
+    volumes:
+      - ./product-service:/app
+    command: npm run dev
 
   # # Inventory Service
-  # inventory-service:
-  #   build:
-  #     context: ./inventory-service
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - '3003:3003'
-  #   environment:
-  #     - NODE_ENV=development
-  #     - PORT=3003
-  #     - MONGODB_URI=mongodb://mongodb:27017/inventory-service
-  #     - REDIS_NODES=redis-1:6379,redis-2:6379,redis-3:6379
-  #   depends_on:
-  #     - mongodb
-  #     - redis-1
-  #     - redis-2
-  #     - redis-3
-  #   networks:
-  #     - microservices-net
-  #   volumes:
-  #     - ./inventory-service:/app
-  #     - /app/node_modules
+  inventory-service:
+    build:
+      context: ./inventory-service
+      dockerfile: Dockerfile.dev
+    ports:
+      - "4003:4003"
+    environment:
+      # NODE_ENV=production
+      - NODE_ENV=development
+      - PORT=4003
+      - DATABASE_URL=mongodb://mongodb:27017/inventory-service
+      - CLOUD_NAME=dlobu2gpz
+      - API_KEY=192912688546831
+      - API_SECRET=5lG23De8ZKLtBlPUzOJ0T-Pcn7U
+      - SOLT_ROUND=10
+      - JWT_SECRET_KEY=oehoshi3inisdir343erg7sdfegh3334gnfng
+      - JWT_REFRESH_KEY=oehoshi3inisdir343erg7sdfegh3334gnfngaffwefwefwe
+      - JWT_REFRESH_TOKEN_EXPIRE=30d
+      - JWT_TOKEN_EXPIRE=10d
+      - REDIS_NODES=redis://redis-1:6379,redis://redis-2:6379,redis://redis-3:6379
+    depends_on:
+      redis-cluster-init:
+        condition: service_completed_successfully
+      mongodb:
+        condition: service_started
+    networks:
+      - microservices-net
+    volumes:
+      - ./inventory-service:/app
+    command: npm run dev
 
   # # Order Service
   # order-service:
