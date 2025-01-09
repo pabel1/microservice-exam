@@ -1,8 +1,9 @@
 const generateSlug = require("../../../shared/generateSlug");
 
 const httpStatus = require("http-status");
-const ProductModel = require("./product.model");
+
 const ErrorHandler = require("../../../ErrorHandler/errorHandler");
+const ProductModel = require("./product.model");
 
 const createProductIntoDB = async (payload) => {
   const isExist = await ProductModel.findOne({

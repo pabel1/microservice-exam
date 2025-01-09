@@ -3,11 +3,13 @@ const express = require("express");
 const validateRequest = require("../../../Middleware/validateRequest");
 const JoiProductValidationSchema = require("./product.validation");
 const productController = require("./product.controller");
+const authVerification = require("../../../Middleware/authVarification");
 
 const router = express.Router();
 
 router.post(
   "/create",
+  authVerification,
   validateRequest(JoiProductValidationSchema.createProductValidationSchema),
   productController.createProduct
 );

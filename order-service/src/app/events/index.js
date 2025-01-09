@@ -1,9 +1,8 @@
-const { initInventoryEvents } = require("../modules/productInventory/productInventory.events");
-
+const { initOrderEvents } = require("../modules/order/order.events");
 
 const subscribeToEvent = () => {
   //  call individual events here
-  initInventoryEvents();
+  initOrderEvents();
 };
 
 module.exports = {

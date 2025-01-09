@@ -1,13 +1,13 @@
 const express = require("express");
 
-const inventoryRouter = require("../app/modules/productInventory/productInventory.router");
+const orderRouter = require("../app/modules/order/order.route");
 
 const router = express.Router();
 
 const routes = [
   {
-    path: "/inventory",
-    route: inventoryRouter,
+    path: "/order",
+    route: orderRouter,
   },
 ];
 

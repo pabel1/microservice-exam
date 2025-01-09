@@ -164,28 +164,37 @@ services:
       - ./inventory-service:/app
     command: npm run dev
 
-  # # Order Service
-  # order-service:
-  #   build:
-  #     context: ./order-service
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - '3004:3004'
-  #   environment:
-  #     - NODE_ENV=development
-  #     - PORT=3004
-  #     - MONGODB_URI=mongodb://mongodb:27017/order-service
-  #     - REDIS_NODES=redis-1:6379,redis-2:6379,redis-3:6379
-  #   depends_on:
-  #     - mongodb
-  #     - redis-1
-  #     - redis-2
-  #     - redis-3
-  #   networks:
-  #     - microservices-net
-  #   volumes:
-  #     - ./order-service:/app
-  #     - /app/node_modules
+  # Order Service
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3005:3005"
+    environment:
+      # NODE_ENV=production
+      - NODE_ENV=development
+      - PORT=4005
+      - DATABASE_URL=mongodb://mongodb:27017/order-service
+      - CLOUD_NAME=dlobu2gpz
+      - API_KEY=192912688546831
+      - API_SECRET=5lG23De8ZKLtBlPUzOJ0T-Pcn7U
+      - SOLT_ROUND=10
+      - JWT_SECRET_KEY=oehoshi3inisdir343erg7sdfegh3334gnfng
+      - JWT_REFRESH_KEY=oehoshi3inisdir343erg7sdfegh3334gnfngaffwefwefwe
+      - JWT_REFRESH_TOKEN_EXPIRE=30d
+      - JWT_TOKEN_EXPIRE=10d
+      - REDIS_NODES=redis://redis-1:6379,redis://redis-2:6379,redis://redis-3:6379
+    depends_on:
+      redis-cluster-init:
+        condition: service_completed_successfully
+      mongodb:
+        condition: service_started
+    networks:
+      - microservices-net
+    volumes:
+      - ./order-service:/app
+    command: npm run dev
 
   # MongoDB
   mongodb:

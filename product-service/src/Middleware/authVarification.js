@@ -44,6 +44,7 @@ const authVerification = async (req, res, next) => {
 
         next();
       } catch (redisError) {
+        console.log("redisError : ", redisError);
         // Handle Redis specific errors
         throw new ErrorHandler(
           "Session validation failed",

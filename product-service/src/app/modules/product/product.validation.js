@@ -9,15 +9,15 @@ const createProductValidationSchema = Joi.object({
     "number.base": "Product price must be a number.",
     "any.required": "Product price is required.",
   }),
-  discount: Joi.number().required().messages({
+  discount: Joi.number().optional().allow("").messages({
     "number.base": "Discount must be a number.",
     "any.required": "Discount is required.",
   }),
-  productDescription: Joi.string().required().messages({
+  productDescription: Joi.string().optional().allow("").messages({
     "string.empty": "Product description is required.",
     "any.required": "Product description is required.",
   }),
-  productDetails: Joi.string().required().messages({
+  productDetails: Joi.string().optional().allow("").messages({
     "string.empty": "Product details are required.",
     "any.required": "Product details are required.",
   }),
