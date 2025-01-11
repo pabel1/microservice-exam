@@ -15,7 +15,21 @@ const createInventoryProduct = catchAsyncError(async (req, res) => {
   });
 });
 
+const getProductFromRedisWithStatus = catchAsyncError(async (req, res) => {
+  const result = await InventoryServices.getProductFromRedis(req.params.id);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Product get successfully",
+    data: {
+      result,
+    },
+  });
+});
+
 const inventoryController = {
   createInventoryProduct,
+  getProductFromRedisWithStatus,
 };
 module.exports = inventoryController;

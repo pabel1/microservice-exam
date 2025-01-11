@@ -14,6 +14,11 @@ router.post(
   inventoryController.createInventoryProduct
 );
 
+router.get(
+  "/get-product-from-redis/:id",
+  inventoryController.getProductFromRedisWithStatus
+);
+
 const inventoryRouter = router;
 
 module.exports = inventoryRouter;

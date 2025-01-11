@@ -5,9 +5,14 @@ class RedisQueueService {
     this.queueName = queueName;
   }
 
-  async push(data) {
+  async push(taskId, data, status = "pending") {
     try {
-      return await RedisClient.lpush(this.queueName, JSON.stringify(data));
+      const payload = {
+        taskId: taskId,
+        data: data,
+        status: status,
+      };
+      return await RedisClient.lpush(this.queueName, JSON.stringify(payload));
     } catch (error) {
       console.error(`Error pushing to ${this.queueName}:`, error);
       return false;
