@@ -13,18 +13,17 @@ class RedisQueueService {
       return false;
     }
   }
+
   async pop() {
     try {
       const data = await RedisClient.rpop(this.queueName);
-      if (data) {
-        console.log(`Data popped from queue ${this.queueName}:`, data);
-        return JSON.parse(data);
-      }
-      return null;
+      return data ? JSON.parse(data) : null;
     } catch (error) {
-      console.error(`Error popping from queue ${this.queueName}:`, error);
+      console.error(`Error popping from ${this.queueName}:`, error);
+      return null;
     }
   }
+
   async blockingPop(timeout = 0) {
     try {
       const result = await RedisClient.brpop(this.queueName, timeout);

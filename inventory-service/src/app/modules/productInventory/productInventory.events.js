@@ -1,7 +1,9 @@
-const { EVENTS } = require("../../../constant/eventsConstant");
+const { EVENTS, QUEUE } = require("../../../constant/eventsConstant");
 const { RedisClient } = require("../../../shared/redis");
+const RedisQueueService = require("../../../shared/redisQueue");
 const InventoryServices = require("./productInventory.service");
 
+const inventoryQueue = new RedisQueueService(QUEUE.INVENTORY_QUEUE);
 const initInventoryEvents = () => {
   try {
     RedisClient.subscribe(
@@ -19,6 +21,19 @@ const initInventoryEvents = () => {
   }
 };
 
+const initInventoryQueueProcessor = () => {
+  inventoryQueue.process(async (data) => {
+    console.log("Processing inventory queue event:", data);
+    // await InventoryServices.createInventoryProductIntoDB(data);
+  });
+};
+
+const pushInventoryEventToQueue = async (eventData) => {
+  await inventoryQueue.push(eventData);
+};
+
 module.exports = {
   initInventoryEvents,
+  initInventoryQueueProcessor,
+  pushInventoryEventToQueue,
 };
