@@ -4,6 +4,8 @@ const httpStatus = require("http-status");
 
 const ErrorHandler = require("../../../ErrorHandler/errorHandler");
 const ProductModel = require("./product.model");
+const { RedisClient } = require("../../../shared/redis");
+const { EVENTS } = require("../../../constant/eventsConstant");
 
 const createProductIntoDB = async (payload) => {
   const isExist = await ProductModel.findOne({
@@ -18,6 +20,14 @@ const createProductIntoDB = async (payload) => {
 
   const product = new ProductModel(payload);
   const newProduct = await product.save();
+
+  // set product in redis for inventory add
+  if (newProduct) {
+    await RedisClient.publish(
+      EVENTS.INVENTORY_EVENTS.INVENTORY_CREATED,
+      JSON.stringify(newProduct)
+    );
+  }
   return newProduct;
 };
 

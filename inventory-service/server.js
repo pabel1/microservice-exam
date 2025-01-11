@@ -12,10 +12,13 @@ async function main() {
     logger.info("Database connected Successfully!!");
 
     // redis connection
-    await RedisClient.connect();
-    // const isHealthy = await verifyRedisClusterHealth();
-
-    subscribeToEvent();
+    await RedisClient.connect()
+      .then(() => {
+        // const isHealthy = await verifyRedisClusterHealth();
+        console.log("Redis Cluster initialized and connected");
+        subscribeToEvent();
+      })
+      .catch((error) => console.error("Redis connection failed:", error));
 
     const server = app.listen(config.port, () => {
       logger.info(`Server running on port ${config.port}`);
