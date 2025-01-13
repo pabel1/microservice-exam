@@ -25,11 +25,11 @@ const createOrderValidationSchema = Joi.object({
     "string.base": "Payment must be a valid string.",
   }),
   orderStatus: Joi.string()
-    .valid("Processing", "Shipped", "Delivered", "Cancelled")
-    .default("Processing")
+    .valid("Pending", "Processing", "Shipped", "Delivered", "Cancelled")
+    .default("Pending")
     .messages({
       "any.only":
-        "Order status must be one of 'Processing', 'Shipped', 'Delivered', or 'Cancelled'.",
+        "Order status must be one of 'Pending', 'Processing', 'Shipped', 'Delivered', or 'Cancelled'.",
     }),
   totalAmount: Joi.number().required().messages({
     "any.required": "Total amount is required.",

@@ -81,6 +81,10 @@ const RedisClient = {
   get: (key) => redisCluster.get(key),
   set: (key, value) => redisCluster.set(key, value),
   del: (key) => redisCluster.del(key),
+  lpush: (key, value) => redisCluster.lpush(key, value),
+  rpop: (key) => redisCluster.rpop(key),
+  hset: (key, hashKey, value) => redisCluster.hset(key, hashKey, value),
+  hget: (key, hashKey) => redisCluster.hget(key, hashKey),
   setAccessToken: async (userId, token) => {
     console.log("token", token);
     const key = `access-token:${userId}`;
