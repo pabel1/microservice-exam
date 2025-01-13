@@ -36,9 +36,29 @@ const getProductFromRedis = async (id) => {
   return JSON.parse(result);
 };
 
+// update inventory product
+const updateInventoryProduct = async (id, payload) => {
+  const isExist = await InventoryModel.findOne({ productId: id });
+  if (!isExist) {
+    throw new ErrorHandler(
+      `${isExist.productId} this Product not found!`,
+      httpStatus.NOT_FOUND
+    );
+  }
+  const product = await InventoryModel.findOneAndUpdate(
+    { productId: id },
+    payload,
+    {
+      new: true,
+    }
+  );
+  return product;
+};
+
 const InventoryServices = {
   createInventoryProductIntoDB,
   getProductFromRedis,
+  updateInventoryProduct,
 };
 
 module.exports = InventoryServices;
