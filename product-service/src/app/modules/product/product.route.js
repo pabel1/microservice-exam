@@ -14,6 +14,12 @@ router.post(
   productController.createProduct
 );
 
+router.post(
+  "/bulk-create",
+  authVerification,
+  productController.createProduct
+);
+
 const productRouter = router;
 
 module.exports = productRouter;

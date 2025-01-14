@@ -4,6 +4,7 @@ const RedisQueueService = require("../../../shared/redisQueue");
 const InventoryServices = require("./productInventory.service");
 
 const inventoryQueue = new RedisQueueService(QUEUE.INVENTORY_QUEUE);
+const orderInventoryQueue = new RedisQueueService(QUEUE.ORDER_INVENTORY_QUEUE);
 const initInventoryEvents = () => {
   try {
     RedisClient.subscribe(
@@ -58,6 +59,45 @@ const initInventoryQueueProcessor = () => {
       );
     }
   });
+
+
+  // orderInventory queue processor
+  orderInventoryQueue.process(async (data) => {
+    const { taskId, data: eventData, status: taskStatus } = data;
+    if (data && taskStatus === "pending") {
+      console.log("first task", taskId);
+      // Store metadata (status and data)
+      const taskKey = `${QUEUE.ORDER_INVENTORY_QUEUE}:${taskId}`;
+      const status = "proccessing";
+      await RedisClient.hset(
+        taskId,
+        taskKey,
+        JSON.stringify({ eventData, status })
+      );
+    }
+    const result =
+      await InventoryServices.updateInventoryProduct(eventData);
+    console.log("result from inventory service in event ", result);
+    if (result) {
+      // Store metadata (status and data)
+      const taskKey = `${QUEUE.ORDER_INVENTORY_QUEUE}:${taskId}`;
+      const status = "completed";
+      await RedisClient.hset(
+        taskId,
+        taskKey,
+        JSON.stringify({ eventData, status })
+      );
+    } else {  
+      const taskKey = `${QUEUE.ORDER_INVENTORY_QUEUE}:${taskId}`;  
+      const status = "failed";
+      await RedisClient.hset(
+        taskId,
+        taskKey,
+        JSON.stringify({ eventData, status })
+      );
+    }
+  })
+  
 };
 
 const pushInventoryEventToQueue = async (eventData) => {
